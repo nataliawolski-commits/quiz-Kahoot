@@ -1,0 +1,383 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Kahoot - Desafio do Conhecimento</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #46178f, #250b50);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    color: #333;
+    width: 100%;
+    max-width: 750px;
+    padding: 35px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+h1 {
+    color: #46178f;
+    margin-bottom: 20px;
+    font-size: 32px;
+}
+
+h2 {
+    margin: 25px 0;
+    font-size: 24px;
+}
+
+p {
+    margin: 15px 0;
+    font-size: 18px;
+}
+
+button {
+    border: none;
+    border-radius: 12px;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: scale(1.03);
+    opacity: 0.9;
+}
+
+#startBtn, #restartBtn {
+    background: #46178f;
+    margin-top: 20px;
+    padding: 18px 35px;
+}
+
+#answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.answer {
+    min-height: 90px;
+}
+
+.answer:nth-child(1) {
+    background: #e21b3c;
+}
+
+.answer:nth-child(2) {
+    background: #1368ce;
+}
+
+.answer:nth-child(3) {
+    background: #d89e00;
+}
+
+.answer:nth-child(4) {
+    background: #26890c;
+}
+
+.answer:disabled {
+    cursor: default;
+    opacity: 0.75;
+}
+
+#feedback {
+    font-size: 22px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+#progress {
+    background: #eee;
+    height: 12px;
+    border-radius: 10px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+#progressBar {
+    height: 100%;
+    width: 0%;
+    background: #46178f;
+    transition: 0.3s;
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 550px) {
+    #answers {
+        grid-template-columns: 1fr;
+    }
+
+    .container {
+        padding: 20px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div id="startScreen">
+        <h1>🎮 QUIZ KAHOOT!</h1>
+        <h2>Desafio do Conhecimento</h2>
+        <p>Prepare-se para testar seus conhecimentos!</p>
+        <p>São 10 perguntas. Acerte o máximo que conseguir!</p>
+        <button id="startBtn" onclick="startGame()">
+            COMEÇAR JOGO
+        </button>
+    </div>
+
+    <div id="gameScreen" class="hidden">
+        <h1>🎯 QUIZ KAHOOT</h1>
+
+        <p id="questionNumber"></p>
+
+        <div id="progress">
+            <div id="progressBar"></div>
+        </div>
+
+        <h2 id="question"></h2>
+
+        <div id="answers"></div>
+
+        <div id="feedback"></div>
+
+        <p id="score">⭐ Pontuação: 0</p>
+
+        <button id="nextBtn" class="hidden"
+            onclick="nextQuestion()">
+            PRÓXIMA PERGUNTA
+        </button>
+    </div>
+
+    <div id="resultScreen" class="hidden">
+        <h1>🏆 FIM DO JOGO!</h1>
+        <h2 id="finalMessage"></h2>
+        <p id="finalScore"></p>
+        <p id="finalHits"></p>
+        <button id="restartBtn" onclick="startGame()">
+            JOGAR NOVAMENTE
+        </button>
+    </div>
+
+</div>
+
+<script>
+
+// Perguntas e respostas do jogo
+const questions = [
+    {
+        question: "Qual é a capital do Brasil?",
+        answers: ["São Paulo", "Brasília", "Rio de Janeiro", "Salvador"],
+        correct: 1
+    },
+    {
+        question: "Quantos planetas existem no Sistema Solar?",
+        answers: ["7", "8", "9", "10"],
+        correct: 1
+    },
+    {
+        question: "Qual é o maior oceano do mundo?",
+        answers: ["Atlântico", "Índico", "Pacífico", "Ártico"],
+        correct: 2
+    },
+    {
+        question: "Quanto é 8 x 7?",
+        answers: ["54", "56", "64", "48"],
+        correct: 1
+    },
+    {
+        question: "Qual é o planeta conhecido como Planeta Vermelho?",
+        answers: ["Vênus", "Júpiter", "Marte", "Saturno"],
+        correct: 2
+    },
+    {
+        question: "Quem escreveu Dom Casmurro?",
+        answers: ["Machado de Assis", "José de Alencar", "Clarice Lispector", "Carlos Drummond"],
+        correct: 0
+    },
+    {
+        question: "Qual é o maior animal do planeta?",
+        answers: ["Elefante", "Girafa", "Baleia-azul", "Tubarão-branco"],
+        correct: 2
+    },
+    {
+        question: "Em qual continente fica o Egito?",
+        answers: ["Europa", "África", "Ásia", "Oceania"],
+        correct: 1
+    },
+    {
+        question: "Qual é o resultado de 100 dividido por 4?",
+        answers: ["20", "25", "30", "40"],
+        correct: 1
+    },
+    {
+        question: "Qual é o idioma oficial do Brasil?",
+        answers: ["Espanhol", "Inglês", "Português", "Francês"],
+        correct: 2
+    }
+];
+
+let currentQuestion = 0;
+let points = 0;
+let hits = 0;
+
+// Iniciar o jogo
+function startGame() {
+    currentQuestion = 0;
+    points = 0;
+    hits = 0;
+
+    document.getElementById("startScreen").classList.add("hidden");
+    document.getElementById("resultScreen").classList.add("hidden");
+    document.getElementById("gameScreen").classList.remove("hidden");
+
+    showQuestion();
+}
+
+// Mostrar pergunta
+function showQuestion() {
+    const q = questions[currentQuestion];
+
+    document.getElementById("questionNumber").innerText =
+        "Pergunta " + (currentQuestion + 1) + " de " + questions.length;
+
+    document.getElementById("question").innerText = q.question;
+
+    document.getElementById("score").innerText =
+        "⭐ Pontuação: " + points;
+
+    document.getElementById("feedback").innerText = "";
+
+    document.getElementById("nextBtn").classList.add("hidden");
+
+    document.getElementById("progressBar").style.width =
+        (currentQuestion / questions.length * 100) + "%";
+
+    const answersDiv = document.getElementById("answers");
+    answersDiv.innerHTML = "";
+
+    q.answers.forEach((answer, index) => {
+        const button = document.createElement("button");
+
+        button.innerText = answer;
+        button.className = "answer";
+
+        button.onclick = function() {
+            checkAnswer(index);
+        };
+
+        answersDiv.appendChild(button);
+    });
+}
+
+// Verificar resposta
+function checkAnswer(selected) {
+    const q = questions[currentQuestion];
+    const buttons = document.querySelectorAll(".answer");
+
+    buttons.forEach(button => {
+        button.disabled = true;
+    });
+
+    if (selected === q.correct) {
+        points += 100;
+        hits++;
+
+        document.getElementById("feedback").innerText =
+            "🎉 PARABÉNS! VOCÊ ACERTOU!";
+        document.getElementById("feedback").style.color = "#26890c";
+
+    } else {
+        document.getElementById("feedback").innerText =
+            "❌ OPS! A resposta correta era: " + q.answers[q.correct];
+
+        document.getElementById("feedback").style.color = "#e21b3c";
+    }
+
+    document.getElementById("score").innerText =
+        "⭐ Pontuação: " + points;
+
+    document.getElementById("nextBtn").classList.remove("hidden");
+
+    if (currentQuestion === questions.length - 1) {
+        document.getElementById("nextBtn").innerText =
+            "VER RESULTADO";
+    } else {
+        document.getElementById("nextBtn").innerText =
+            "PRÓXIMA PERGUNTA";
+    }
+}
+
+// Avançar pergunta
+function nextQuestion() {
+    currentQuestion++;
+
+    if (currentQuestion < questions.length) {
+        showQuestion();
+    } else {
+        showResult();
+    }
+}
+
+// Mostrar resultado final
+function showResult() {
+    document.getElementById("gameScreen").classList.add("hidden");
+    document.getElementById("resultScreen").classList.remove("hidden");
+
+    document.getElementById("progressBar").style.width = "100%";
+
+    document.getElementById("finalScore").innerText =
+        "⭐ Sua pontuação: " + points + " pontos";
+
+    document.getElementById("finalHits").innerText =
+        "✅ Você acertou " + hits + " de " + questions.length + " perguntas!";
+
+    let message = "";
+
+    if (hits === 10) {
+        message = "🏆 INCRÍVEL! VOCÊ É UM CAMPEÃO!";
+    } else if (hits >= 7) {
+        message = "👏 MUITO BEM! VOCÊ FOI ÓTIMO!";
+    } else if (hits >= 4) {
+        message = "😊 BOM TRABALHO! CONTINUE PRATICANDO!";
+    } else {
+        message = "💪 NÃO DESISTA! TENTE NOVAMENTE!";
+    }
+
+    document.getElementById("finalMessage").innerText = message;
+}
+
+</script>
+
+</body>
+</html>
